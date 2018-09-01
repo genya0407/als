@@ -34,6 +34,10 @@ fn main() {
         AggregationMode::Cnt
     } else if matches.opt_present("avg") {
         AggregationMode::Avg
+    } else if matches.opt_present("max") {
+        AggregationMode::Max
+    } else if matches.opt_present("min") {
+        AggregationMode::Min
     } else {
         AggregationMode::Cnt
     };
@@ -64,7 +68,9 @@ fn main() {
 enum AggregationMode {
     Sum,
     Cnt,
-    Avg
+    Avg,
+    Max,
+    Min,
 }
 
 struct AccessLogAggregator {
@@ -84,6 +90,12 @@ impl AccessLogAggregator {
                 let cnt = access_logs.len() as f32;
                 let sum: f32 = access_logs.into_iter().map(|al| al.reqtime).sum();
                 return sum / cnt;
+            }),
+            AggregationMode::Max => self.group_by_second(access_logs, |access_logs| {
+                access_logs.into_iter().map(|al| al.reqtime).fold(0.0/0.0, f32::max)
+            }),
+            AggregationMode::Min => self.group_by_second(access_logs, |access_logs| {
+                access_logs.into_iter().map(|al| al.reqtime).fold(0.0/0.0, f32::min)
             }),
         }
     }
@@ -148,6 +160,8 @@ fn opts() -> Options {
     opts.optflag("", "sum", "show the sum of the response times");
     opts.optflag("", "cnt", "show the count of the requests");
     opts.optflag("", "avg", "show the average response time");
+    opts.optflag("", "max", "show the average response time");
+    opts.optflag("", "min", "show the average response time");
 
     opts.optopt("", "uri",    "set target uri pattern", "PATTERN");
     opts.optopt("", "method", "set target http method", "METHOD");

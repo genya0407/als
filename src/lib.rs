@@ -3,6 +3,7 @@ extern crate chrono;
 use std::io::prelude::*;
 use chrono::prelude::*;
 
+#[derive(PartialEq,Eq,Clone,Copy)]
 pub enum Method {
     Get,
     Post,
@@ -13,7 +14,7 @@ pub enum Method {
 
 impl Method {
     pub fn from_str(method_str: &str) -> Self {
-        match method_str {
+        match method_str.to_uppercase().as_str() {
             "GET"    => Method::Get,
             "POST"   => Method::Post,
             "PUT"    => Method::Put,
@@ -24,11 +25,11 @@ impl Method {
 }
 
 pub struct AccessLog {
-    time: DateTime<Local>,
-    method: Method,
-    uri: String,
-    status: i32,
-    reqtime: f32,
+    pub time: DateTime<Local>,
+    pub method: Method,
+    pub uri: String,
+    pub status: i32,
+    pub reqtime: f32,
 }
 
 impl AccessLog {

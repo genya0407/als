@@ -5,3 +5,5 @@ authors = ["Yusuke Sangenya <longinus.eva@gmail.com>"]
 
 [dependencies]
 chrono = "0.4"
+getopts = "0.2"
+regex = "1"

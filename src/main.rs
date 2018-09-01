@@ -1,24 +1,19 @@
 /* Spec
-    指定できるべきもの：
-        - aggregation
-            - sum
-            - cnt
-            - avg
-        - filter
-            - uri
-                - can be regexp or direct path
-            - method
-            - status
 */
 
 extern crate als;
 extern crate getopts;
 extern crate regex;
+extern crate chrono;
+extern crate itertools;
 
 use std::io;
+use std::io::Write;
 use getopts::Options;
 use std::env;
 use regex::Regex;
+use chrono::prelude::*;
+use itertools::Itertools;
 
 fn main() {
     // parse options
@@ -56,7 +51,14 @@ fn main() {
     let stdin = stdin.lock();
     let access_logs = als::read_access_log(stdin);
     let filtered = access_log_filter.filter(access_logs);
-    println!("{}", filtered.len());
+    let aggregated = access_log_aggregator.aggregate(filtered);
+
+    // write tsv
+    let stdout = io::stdout();
+    let mut stdout = io::BufWriter::new(stdout.lock());
+    for (t, val) in aggregated {
+        stdout.write(format!("{}\t{}\n", t.to_rfc3339(), val).as_bytes()).unwrap();
+    }
 }
 
 enum AggregationMode {
@@ -67,6 +69,38 @@ enum AggregationMode {
 
 struct AccessLogAggregator {
     pub mode: AggregationMode
+}
+
+impl AccessLogAggregator {
+    fn aggregate(&self, access_logs: Vec<als::AccessLog>) -> Vec<(DateTime<Local>, f32)> {
+        match self.mode {
+            AggregationMode::Sum => self.group_by_second(access_logs, |access_logs| {
+                access_logs.into_iter().map(|al| al.reqtime).sum()
+            }),
+            AggregationMode::Cnt => self.group_by_second(access_logs, |access_logs| {
+                access_logs.len() as f32
+            }),
+            AggregationMode::Avg => self.group_by_second(access_logs, |access_logs| {
+                let cnt = access_logs.len() as f32;
+                let sum: f32 = access_logs.into_iter().map(|al| al.reqtime).sum();
+                return sum / cnt;
+            }),
+        }
+    }
+
+    fn group_by_second<F>(&self, mut access_logs: Vec<als::AccessLog>, mut f: F) -> Vec<(DateTime<Local>, f32)>
+            where F: FnMut(Vec<als::AccessLog>) -> f32 {
+        let mut results = vec![];
+
+        access_logs.sort_by_key(|al| al.time);
+        for (timestamp, access_logs) in &access_logs.into_iter().group_by(|al| al.time.timestamp()) {
+            let t = Local.timestamp(timestamp, 0);
+            let value = f(access_logs.collect());
+            results.push((t, value))
+        }
+
+        return results;
+    }
 }
 
 struct AccessLogFilter {

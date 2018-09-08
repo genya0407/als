@@ -87,6 +87,6 @@ fn main() {
     let stdout = io::stdout();
     let mut stdout = io::BufWriter::new(stdout.lock());
     for (t, val) in aggregated_logs {
-        stdout.write(format!("{}\t{}\n", t.to_rfc3339(), val).as_bytes()).expect("Failed to write result.");
+        stdout.write(format!("{}\t{}\n", t.timestamp(), val).as_bytes()).expect("Failed to write result.");
     }
 }

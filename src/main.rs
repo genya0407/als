@@ -29,6 +29,8 @@ fn opts() -> Options {
     opts.optopt("", "method", "set target http method", "METHOD");
     opts.optopt("", "status", "set target http status", "STATUS");
 
+    opts.optopt("f", "input-file", "set nginx log file", "FILE");
+
     return opts;
 }
 
@@ -66,10 +68,16 @@ fn main() {
     let status = matches.opt_str("status").map(|s| s.parse().expect("Failed to parse status as integer."));
     let filter = access_log_filter::AccessLogFilter::new(uri, method, status);
 
-    // parse access log
-    let stdin = io::stdin();
-    let stdin = stdin.lock();
-    let access_logs = als::access_log::from_reader(stdin);
+    // read & parse access log
+    let access_logs = if let Some(input_filename) = matches.opt_str("f") {
+        let file = std::fs::File::open(input_filename.clone()).expect(&format!("Failed to read file: {}", input_filename));
+        let file = io::BufReader::new(file);
+        als::access_log::from_reader(file)
+    } else {
+        let stdin = io::stdin();
+        let stdin = stdin.lock();
+        als::access_log::from_reader(stdin)
+    };
 
     // filter & aggregate
     let filtered_logs = filter.filter(access_logs);

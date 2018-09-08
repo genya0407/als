@@ -1,4 +1,4 @@
-extern crate als;
+extern crate alta;
 extern crate getopts;
 extern crate regex;
 extern crate nix;
@@ -10,10 +10,10 @@ use regex::Regex;
 use nix::sys::stat::fstat;
 use std::os::unix::io::AsRawFd;
 
-use als::{access_log, access_log_filter, access_log_aggregator};
+use alta::{access_log, access_log_filter, access_log_aggregator};
 
 fn print_usage(program: &str, opts: Options) {
-    let brief = format!("Usage: {} FILE [options]", program);
+    let brief = format!("Usage: {} [options]", program);
     print!("{}", opts.usage(&brief));
 }
 
@@ -75,7 +75,7 @@ fn main() {
     let access_logs = if let Some(input_filename) = matches.opt_str("f") {
         let file = std::fs::File::open(input_filename.clone()).expect(&format!("Failed to read file: {}", input_filename));
         let file = io::BufReader::new(file);
-        als::access_log::from_reader(file)
+        alta::access_log::from_reader(file)
     } else {
         let stdin = io::stdin();
         let file_stat = fstat(stdin.as_raw_fd()).expect("Failed to call fstat (2).");
@@ -84,7 +84,7 @@ fn main() {
             return;
         }
         let stdin = stdin.lock();
-        als::access_log::from_reader(stdin)
+        alta::access_log::from_reader(stdin)
     };
 
     // filter & aggregate

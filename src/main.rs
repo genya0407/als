@@ -10,7 +10,7 @@ use regex::Regex;
 use nix::sys::stat::fstat;
 use std::os::unix::io::AsRawFd;
 
-use alta::{access_log, access_log_filter, access_log_aggregator};
+use alta::{access_log, access_log_filter, access_log_aggregator, plot};
 
 fn print_usage(program: &str, opts: Options) {
     let brief = format!("Usage: {} [options]", program);
@@ -31,6 +31,8 @@ fn opts() -> Options {
     opts.optopt("", "uri",    "set target uri pattern", "PATTERN");
     opts.optopt("", "method", "set target http method", "METHOD");
     opts.optopt("", "status", "set target http status", "STATUS");
+
+    opts.optopt("", "width", "set graph width (default: 1.0)", "WIDTH");
 
     opts.optopt("f", "input-file", "set nginx log file", "FILE");
 
@@ -91,10 +93,18 @@ fn main() {
     let filtered_logs = filter.filter(access_logs);
     let aggregated_logs = aggregator.aggregate(filtered_logs);
 
-    // write tsv
+    // generate tsv
+    let mut tsv = String::new();
+    for (t, val) in aggregated_logs {
+        tsv += &format!("{}\t{}\n", t.timestamp(), val);
+    }
+
+    let width_ratio: f32 = matches.opt_str("width").and_then(|ratio| ratio.parse().ok()).unwrap_or(1.0);
+    let width = (100.0 * width_ratio) as u32;
+
+    let plot_string = plot::plot_ascii(tsv, width);
+
     let stdout = io::stdout();
     let mut stdout = io::BufWriter::new(stdout.lock());
-    for (t, val) in aggregated_logs {
-        stdout.write(format!("{}\t{}\n", t.timestamp(), val).as_bytes()).expect("Failed to write result.");
-    }
+    stdout.write_all(plot_string.as_bytes()).unwrap();
 }

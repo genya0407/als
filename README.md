@@ -4,22 +4,15 @@ alta is Access Log Timeseries Analyzser for Labeled Tab-separated Values(LTSV).
 
 Inspired by [alp](https://github.com/tkuchiki/alp).
 
-# Installation
-
-## Requirement
+# Requirement
 
 alta requires `gnuplot` command.
 
-See http://www.gnuplot.info/ .
+See http://www.gnuplot.info/
 
-## Build from source
+# Installation
 
-```
-$ git clone git@github.com:genya0407/alta.git
-$ cd alta
-$ cargo build --release
-$ ./target/release/alta
-```
+Download from https://github.com/genya0407/alta/releases/latest
 
 # Usage
 

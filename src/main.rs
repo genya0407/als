@@ -44,7 +44,7 @@ fn main() {
         return;
     }
 
-    // construct aggregator
+    // build aggregator
     let aggregation_mode = if matches.opt_present("sum") {
         access_log_aggregator::AggregationMode::Sum
     } else if matches.opt_present("cnt") {
@@ -60,7 +60,7 @@ fn main() {
     };
     let aggregator = access_log_aggregator::AccessLogAggregator::new(aggregation_mode);
 
-    // construct filter
+    // build filter
     let uri = matches.opt_str("uri").map(|u| Regex::new(&u).expect("Failed to parse uri as regexp."));
     let method = matches.opt_str("method").map(|s| access_log::Method::from_str(&s));
     let status = matches.opt_str("status").map(|s| s.parse().expect("Failed to parse status as integer."));

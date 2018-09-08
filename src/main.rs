@@ -1,11 +1,14 @@
 extern crate als;
 extern crate getopts;
 extern crate regex;
+extern crate nix;
 
 use std::io::{self, Write};
 use getopts::Options;
 use std::env;
 use regex::Regex;
+use nix::sys::stat::fstat;
+use std::os::unix::io::AsRawFd;
 
 use als::{access_log, access_log_filter, access_log_aggregator};
 
@@ -75,6 +78,11 @@ fn main() {
         als::access_log::from_reader(file)
     } else {
         let stdin = io::stdin();
+        let file_stat = fstat(stdin.as_raw_fd()).expect("Failed to call fstat (2).");
+        if (file_stat.st_mode & nix::sys::stat::SFlag::S_IFIFO.bits()) == 0 {
+            print_usage(&program, opts);
+            return;
+        }
         let stdin = stdin.lock();
         als::access_log::from_reader(stdin)
     };

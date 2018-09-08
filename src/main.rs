@@ -1,6 +1,3 @@
-/* Spec
-*/
-
 extern crate als;
 extern crate getopts;
 extern crate regex;
